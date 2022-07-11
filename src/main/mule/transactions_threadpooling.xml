@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="87e7f11f-0307-42c9-b492-7d813809854a" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="12345678" database="employeedetails" transactionIsolation="READ_UNCOMMITTED"/>
+	</db:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="683f7c60-eded-49a9-827d-3f0b88f8a517" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="transactions_threadpoolingFlow" doc:id="c2915255-105a-40d7-976a-840a5f867ce9" >
+		<http:listener doc:name="Listener" doc:id="e6a60f14-ce06-45af-a074-2c6b2f0b97a9" config-ref="HTTP_Listener_config" path="/trans"/>
+		<try doc:name="Try" doc:id="064af881-7a50-484a-bf96-83d3bc68ae5e">
+			<logger level="INFO" doc:name="Logger" doc:id="8b9634e4-1f06-4d23-9134-197fafee1bba" message="start"/>
+			<ee:transform doc:name="Transform Message" doc:id="8835fb62-580f-44b4-a2c4-e5d6dd291a67">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+"name": "neha",
+"dist": "kolhapur",
+"tal": "shirol",
+"city": "kurundwad"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="2854c2f8-268e-413c-93e2-c871e58ebe3a" message="mid"/>
+			<db:insert doc:name="Insert" doc:id="39cb3c9e-9f13-4ca4-8a98-9038f6506892" config-ref="Database_Config" transactionalAction="NOT_SUPPORTED">
+			<db:sql><![CDATA[insert into employeedetails.transactions values(:name,:dist,:tal,:city);]]></db:sql>
+				<db:input-parameters ><![CDATA[#[{'name':payload.name,
+'dist':payload.dist,
+'tal':payload.tal,
+'city':payload.city}]]]></db:input-parameters>
+		</db:insert>
+			<logger level="INFO" doc:name="Logger" doc:id="19fdf85d-40bb-4f41-84f5-a51ad0ee10d0" message="after insert"/>
+			<ee:transform doc:name="Transform Message" doc:id="a35ab1d7-0b6e-4b55-9289-c292befe2f91">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"kjiuyt"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="f5031c34-3adb-4200-b04b-bdf62b6a77f9" message='#["details inserted"]' />
+		</try>
+	</flow>
+</mule>
